@@ -1,0 +1,66 @@
+SDD中文网站部署说明
+==================
+
+本项目包含以下部署文件：
+1. deploy-windows.bat - Windows下的部署批处理脚本
+2. deploy-commands.sh - 服务器端的部署命令脚本
+3. sddchinese.nginx.conf - Nginx配置文件
+
+部署步骤：
+---------
+
+方法一：使用Windows批处理脚本（推荐）
+----------------------------------
+1. 确保您的Windows系统已安装OpenSSH客户端（Windows 10/11默认包含）
+2. 确保您可以通过SSH密钥或密码访问服务器 8.140.22.103
+3. 修改 deploy-windows.bat 文件中的 SERVER_USER 变量为您实际的服务器用户名（如果不是root）
+4. 双击运行 deploy-windows.bat 脚本
+5. 脚本会自动打包网站文件、传输到服务器并执行部署命令
+
+方法二：手动部署
+--------------
+1. 打包网站文件：
+   - 将 index.html, styles.css, script.js, sddchinese.nginx.conf 打包成zip文件
+
+2. 传输文件到服务器：
+   scp sddchinese-website.zip root@8.140.22.103:/tmp/
+
+3. 在服务器上执行以下命令：
+
+   # 更新系统包
+   apt update
+
+   # 安装必要软件
+   apt install -y nginx unzip
+
+   # 创建网站目录
+   mkdir -p /var/www/sddchinese
+
+   # 解压网站文件
+   unzip -o /tmp/sddchinese-website.zip -d /var/www/sddchinese
+
+   # 设置文件权限
+   chown -R www-data:www-data /var/www/sddchinese
+   chmod -R 755 /var/www/sddchinese
+
+   # 配置Nginx
+   cp /var/www/sddchinese/sddchinese.nginx.conf /etc/nginx/sites-available/sddchinese
+   ln -sf /etc/nginx/sites-available/sddchinese /etc/nginx/sites-enabled/
+   rm -f /etc/nginx/sites-enabled/default
+
+   # 测试并重启Nginx
+   nginx -t
+   systemctl restart nginx
+   systemctl enable nginx
+
+访问网站：
+--------
+部署完成后，您可以通过以下地址访问网站：
+http://8.140.22.103
+
+注意事项：
+--------
+1. 如果您使用非root用户，请确保该用户具有sudo权限
+2. 确保服务器的80端口未被防火墙阻止
+3. 如果需要使用域名访问，请将域名解析指向 8.140.22.103
+4. 部署过程中如遇到权限问题，请使用sudo执行相关命令
